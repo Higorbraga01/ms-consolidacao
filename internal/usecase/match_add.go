@@ -10,20 +10,26 @@ import (
 )
 
 type MatchInput struct {
-	ID      string
-	Date    time.Time
-	TeamAID string
-	TeamBID string
+	ID      string    `json:"id"`
+	Date    time.Time `json:"match_date"`
+	TeamAID string    `json:"team_a_id"`
+	TeamBID string    `json:"team_b_id"`
 }
 
 type MatchUseCase struct {
 	Uow uow.UowInterface
 }
 
-func (a *MatchUseCase) Execute(ctx context.Context, input MatchInput) error {
-	return a.Uow.Do(ctx, func(uow *uow.Uow) error {
-		matchRepository := a.getMatchRepository(ctx)
-		teamRepository := a.getTeamRepository(ctx)
+func NewMatchUseCase(uow uow.UowInterface) *MatchUseCase {
+	return &MatchUseCase{
+		Uow: uow,
+	}
+}
+
+func (u *MatchUseCase) Execute(ctx context.Context, input MatchInput) error {
+	err := u.Uow.Do(ctx, func(_ *uow.Uow) error {
+		matchRepository := u.getMatchRepository(ctx)
+		teamRepository := u.getTeamRepository(ctx)
 
 		teamA, err := teamRepository.FindByID(ctx, input.TeamAID)
 		if err != nil {
@@ -43,6 +49,7 @@ func (a *MatchUseCase) Execute(ctx context.Context, input MatchInput) error {
 		}
 		return nil
 	})
+	return err
 }
 
 func (u *MatchUseCase) getMatchRepository(ctx context.Context) repository.MatchRepositoryInterface {
