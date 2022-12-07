@@ -1,14 +1,16 @@
-package cartola
+package main
 
 import (
 	"context"
 	"database/sql"
 	"net/http"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/go-chi/chi"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/higorbraga01/ms-cosolidacao/internal/infra/db"
 	httphandler "github.com/higorbraga01/ms-cosolidacao/internal/infra/http"
+	"github.com/higorbraga01/ms-cosolidacao/internal/infra/kafka/consumer"
 	"github.com/higorbraga01/ms-cosolidacao/internal/infra/repository"
 	"github.com/higorbraga01/ms-cosolidacao/pkg/uow"
 )
@@ -36,9 +38,9 @@ func main() {
 	go http.ListenAndServe(":8081", r)
 
 	var topics = []string{"newMatch", "chooseTeam", "newPlayer", "matchUpdateResult", "newAction"}
-	// msgChan := make(chan *kafka.Message)
-	// go consumer.Consume(topics, "broker:9094", msgChan)
-	// consumer.ProcessEvents(ctx, msgChan, uow)
+	msgChan := make(chan *kafka.Message)
+	go consumer.Consume(topics, "broker:9094", msgChan)
+	consumer.ProcessEvents(ctx, msgChan, uow)
 }
 
 func registerRepositories(uow *uow.Uow) {
